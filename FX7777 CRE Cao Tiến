@@ -1,0 +1,438 @@
+--========================================================
+-- FX7777 CRE | CAO TIẾN
+-- SERVER 1 PLAYER
+-- Black × White Anime Style
+-- Mobile + PC | Client GUI
+--========================================================
+
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+local Player = Players.LocalPlayer
+if not Player then return end
+
+local PLACE_ID = game.PlaceId
+local TARGET_PLAYERS = 1
+local GUI_NAME = "FX7777CRE_ServerHopper"
+
+-- Clean old GUI
+pcall(function()
+    local old = Player:WaitForChild("PlayerGui"):FindFirstChild(GUI_NAME)
+    if old then old:Destroy() end
+end)
+
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+--========================================================
+-- GUI
+--========================================================
+
+local Gui = Instance.new("ScreenGui")
+Gui.Name = GUI_NAME
+Gui.ResetOnSpawn = false
+Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+Gui.Parent = PlayerGui
+
+local Shadow = Instance.new("Frame")
+Shadow.Name = "Shadow"
+Shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+Shadow.Position = UDim2.fromScale(0.5, 0.5)
+Shadow.Size = UDim2.fromOffset(342, 222)
+Shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Shadow.BackgroundTransparency = 0.35
+Shadow.BorderSizePixel = 0
+Shadow.Parent = Gui
+
+local ShadowCorner = Instance.new("UICorner")
+ShadowCorner.CornerRadius = UDim.new(0, 22)
+ShadowCorner.Parent = Shadow
+
+local Main = Instance.new("Frame")
+Main.Name = "Main"
+Main.AnchorPoint = Vector2.new(0.5, 0.5)
+Main.Position = UDim2.fromScale(0.5, 0.5)
+Main.Size = UDim2.fromOffset(330, 210)
+Main.BackgroundColor3 = Color3.fromRGB(8, 8, 10)
+Main.BorderSizePixel = 0
+Main.Parent = Gui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 20)
+MainCorner.Parent = Main
+
+local Stroke = Instance.new("UIStroke")
+Stroke.Thickness = 1.5
+Stroke.Color = Color3.fromRGB(220, 220, 225)
+Stroke.Transparency = 0.25
+Stroke.Parent = Main
+
+-- subtle moving border
+task.spawn(function()
+    while Gui.Parent do
+        TweenService:Create(
+            Stroke,
+            TweenInfo.new(1.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+            {Transparency = 0.65}
+        ):Play()
+        task.wait(1.6)
+        TweenService:Create(
+            Stroke,
+            TweenInfo.new(1.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+            {Transparency = 0.15}
+        ):Play()
+        task.wait(1.6)
+    end
+end)
+
+-- Top monochrome glow
+local Glow = Instance.new("Frame")
+Glow.Size = UDim2.new(1, 0, 0, 5)
+Glow.BackgroundColor3 = Color3.fromRGB(235, 235, 240)
+Glow.BorderSizePixel = 0
+Glow.Parent = Main
+
+local GlowCorner = Instance.new("UICorner")
+GlowCorner.CornerRadius = UDim.new(1, 0)
+GlowCorner.Parent = Glow
+
+-- Decorative moon/orb, inspired by the supplied monochrome image
+local Moon = Instance.new("Frame")
+Moon.AnchorPoint = Vector2.new(1, 0)
+Moon.Position = UDim2.new(1, -18, 0, 18)
+Moon.Size = UDim2.fromOffset(48, 48)
+Moon.BackgroundColor3 = Color3.fromRGB(245, 245, 248)
+Moon.BorderSizePixel = 0
+Moon.Parent = Main
+
+local MoonCorner = Instance.new("UICorner")
+MoonCorner.CornerRadius = UDim.new(1, 0)
+MoonCorner.Parent = Moon
+
+local MoonGlow = Instance.new("UIStroke")
+MoonGlow.Thickness = 8
+MoonGlow.Transparency = 0.88
+MoonGlow.Color = Color3.fromRGB(255, 255, 255)
+MoonGlow.Parent = Moon
+
+local Title = Instance.new("TextLabel")
+Title.BackgroundTransparency = 1
+Title.Position = UDim2.fromOffset(20, 18)
+Title.Size = UDim2.new(1, -90, 0, 30)
+Title.Font = Enum.Font.GothamBlack
+Title.Text = "FX7777 CRE"
+Title.TextColor3 = Color3.fromRGB(248, 248, 250)
+Title.TextSize = 24
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = Main
+
+local Sub = Instance.new("TextLabel")
+Sub.BackgroundTransparency = 1
+Sub.Position = UDim2.fromOffset(21, 47)
+Sub.Size = UDim2.new(1, -42, 0, 20)
+Sub.Font = Enum.Font.GothamMedium
+Sub.Text = "CAO TIẾN  •  SERVER HOPPER"
+Sub.TextColor3 = Color3.fromRGB(155, 155, 162)
+Sub.TextSize = 11
+Sub.TextXAlignment = Enum.TextXAlignment.Left
+Sub.Parent = Main
+
+local Status = Instance.new("TextLabel")
+Status.BackgroundTransparency = 1
+Status.Position = UDim2.fromOffset(20, 76)
+Status.Size = UDim2.new(1, -40, 0, 25)
+Status.Font = Enum.Font.GothamSemibold
+Status.Text = "● SẴN SÀNG"
+Status.TextColor3 = Color3.fromRGB(215, 215, 220)
+Status.TextSize = 13
+Status.TextXAlignment = Enum.TextXAlignment.Left
+Status.Parent = Main
+
+local Button = Instance.new("TextButton")
+Button.Name = "HopButton"
+Button.Position = UDim2.fromOffset(20, 111)
+Button.Size = UDim2.new(1, -40, 0, 48)
+Button.BackgroundColor3 = Color3.fromRGB(235, 235, 238)
+Button.TextColor3 = Color3.fromRGB(10, 10, 12)
+Button.Font = Enum.Font.GothamBlack
+Button.Text = "SERVER 1 PLAYER"
+Button.TextSize = 15
+Button.AutoButtonColor = false
+Button.BorderSizePixel = 0
+Button.Parent = Main
+
+local ButtonCorner = Instance.new("UICorner")
+ButtonCorner.CornerRadius = UDim.new(0, 14)
+ButtonCorner.Parent = Button
+
+local ButtonStroke = Instance.new("UIStroke")
+ButtonStroke.Thickness = 1
+ButtonStroke.Color = Color3.fromRGB(255, 255, 255)
+ButtonStroke.Transparency = 0.15
+ButtonStroke.Parent = Button
+
+local Hint = Instance.new("TextLabel")
+Hint.BackgroundTransparency = 1
+Hint.Position = UDim2.fromOffset(20, 169)
+Hint.Size = UDim2.new(1, -40, 0, 25)
+Hint.Font = Enum.Font.Gotham
+Hint.Text = "KÉO HEADER ĐỂ DI CHUYỂN  •  T = ẨN/HIỆN"
+Hint.TextColor3 = Color3.fromRGB(110, 110, 118)
+Hint.TextSize = 9
+Hint.TextXAlignment = Enum.TextXAlignment.Center
+Hint.Parent = Main
+
+--========================================================
+-- DRAG (PC + MOBILE)
+--========================================================
+
+local dragging = false
+local dragStart
+local startPos
+
+local function updateDrag(input)
+    local delta = input.Position - dragStart
+    local pos = UDim2.new(
+        startPos.X.Scale,
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale,
+        startPos.Y.Offset + delta.Y
+    )
+    Main.Position = pos
+    Shadow.Position = pos
+end
+
+Title.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = Main.Position
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (
+        input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch
+    ) then
+        updateDrag(input)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+--========================================================
+-- SERVER HOPPER
+--========================================================
+
+local busy = false
+
+local function setStatus(text)
+    Status.Text = "● " .. text
+end
+
+local function fetchServers(cursor)
+    local url =
+        "https://games.roblox.com/v1/games/" ..
+        tostring(PLACE_ID) ..
+        "/servers/Public?sortOrder=Asc&limit=100"
+
+    if cursor and cursor ~= "" then
+        url = url .. "&cursor=" .. HttpService:UrlEncode(cursor)
+    end
+
+    local ok, result = pcall(function()
+        return game:HttpGet(url)
+    end)
+
+    if not ok then
+        return nil, "HTTP ERROR"
+    end
+
+    local decodedOk, data = pcall(function()
+        return HttpService:JSONDecode(result)
+    end)
+
+    if not decodedOk or type(data) ~= "table" then
+        return nil, "JSON ERROR"
+    end
+
+    return data
+end
+
+local function findOnePlayerServer()
+    local cursor = nil
+
+    for _ = 1, 8 do
+        local data, err = fetchServers(cursor)
+        if not data then
+            return nil, err
+        end
+
+        if type(data.data) == "table" then
+            for _, server in ipairs(data.data) do
+                local playing = tonumber(server.playing) or 0
+                local maxPlayers = tonumber(server.maxPlayers) or 0
+                local id = server.id
+
+                if id
+                    and id ~= game.JobId
+                    and playing == TARGET_PLAYERS
+                    and maxPlayers > playing then
+                    return id
+                end
+            end
+        end
+
+        cursor = data.nextPageCursor
+        if not cursor or cursor == "" then
+            break
+        end
+
+        task.wait(0.15)
+    end
+
+    return nil, "KHÔNG TÌM THẤY"
+end
+
+local function hop()
+    if busy then return end
+    busy = true
+
+    Button.Text = "ĐANG TÌM SERVER..."
+    Button.Active = false
+    setStatus("ĐANG QUÉT SERVER 1 PLAYER")
+
+    local serverId, err = findOnePlayerServer()
+
+    if serverId then
+        setStatus("ĐANG TELEPORT...")
+        Button.Text = "TELEPORTING..."
+
+        task.wait(0.25)
+
+        local ok = pcall(function()
+            TeleportService:TeleportToPlaceInstance(
+                PLACE_ID,
+                serverId,
+                Player
+            )
+        end)
+
+        if not ok then
+            setStatus("TELEPORT THẤT BẠI")
+            Button.Text = "THỬ LẠI"
+            Button.Active = true
+            busy = false
+        end
+    else
+        setStatus(err or "KHÔNG CÓ SERVER")
+        Button.Text = "SERVER 1 PLAYER"
+        Button.Active = true
+        busy = false
+    end
+end
+
+Button.MouseButton1Click:Connect(hop)
+
+Button.MouseEnter:Connect(function()
+    TweenService:Create(
+        Button,
+        TweenInfo.new(0.15),
+        {BackgroundColor3 = Color3.fromRGB(205, 205, 210)}
+    ):Play()
+end)
+
+Button.MouseLeave:Connect(function()
+    TweenService:Create(
+        Button,
+        TweenInfo.new(0.15),
+        {BackgroundColor3 = Color3.fromRGB(235, 235, 238)}
+    ):Play()
+end)
+
+--========================================================
+-- MENU ON / OFF
+-- T = ẨN / HIỆN
+-- Khi ẩn sẽ xuất hiện nút tròn "FX"
+-- Bấm nút tròn để mở lại menu
+--========================================================
+
+local visible = true
+
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Name = "ToggleButton"
+ToggleButton.AnchorPoint = Vector2.new(1, 1)
+ToggleButton.Position = UDim2.new(1, -18, 1, -18)
+ToggleButton.Size = UDim2.fromOffset(58, 58)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(8, 8, 10)
+ToggleButton.Text = "FX"
+ToggleButton.TextColor3 = Color3.fromRGB(245, 245, 248)
+ToggleButton.Font = Enum.Font.GothamBlack
+ToggleButton.TextSize = 18
+ToggleButton.Visible = false
+ToggleButton.AutoButtonColor = false
+ToggleButton.BorderSizePixel = 0
+ToggleButton.Parent = Gui
+
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(1, 0)
+ToggleCorner.Parent = ToggleButton
+
+local ToggleStroke = Instance.new("UIStroke")
+ToggleStroke.Thickness = 2
+ToggleStroke.Color = Color3.fromRGB(235, 235, 240)
+ToggleStroke.Parent = ToggleButton
+
+local function setMenuVisible(state)
+    visible = state
+    Main.Visible = state
+    Shadow.Visible = state
+    ToggleButton.Visible = not state
+
+    if state then
+        setStatus("SẴN SÀNG")
+    end
+end
+
+local function toggleMenu()
+    setMenuVisible(not visible)
+end
+
+ToggleButton.MouseButton1Click:Connect(function()
+    setMenuVisible(true)
+end)
+
+ToggleButton.MouseEnter:Connect(function()
+    TweenService:Create(
+        ToggleButton,
+        TweenInfo.new(0.15),
+        {Size = UDim2.fromOffset(64, 64)}
+    ):Play()
+end)
+
+ToggleButton.MouseLeave:Connect(function()
+    TweenService:Create(
+        ToggleButton,
+        TweenInfo.new(0.15),
+        {Size = UDim2.fromOffset(58, 58)}
+    ):Play()
+end)
+
+UserInputService.InputBegan:Connect(function(input, processed)
+    if processed then return end
+
+    if input.KeyCode == Enum.KeyCode.T then
+        toggleMenu()
+    end
+end)
+
+setStatus("SẴN SÀNG")
